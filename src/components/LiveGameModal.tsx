@@ -13,15 +13,22 @@ export const LiveGameModal: React.FC<LiveGameModalProps> = ({ isOpen, onClose })
   if (!isOpen) return null;
 
   const handleSimulatePlay = () => {
+    const playDescriptions = [
+      'Shohei Ohtani lines a 112-mph RBI double into the right-field corner! Freeman scores from second base!',
+      'Devin Williams gets a swinging strikeout with the high changeup for the second out.',
+      'Mookie Betts steals third base on a pitch in the dirt; throws skips into the outfield!',
+      'Max Muncy draws a full-count walk to load the bases.',
+    ];
+
+    const currentDescription = playDescriptions[simulatedCount % playDescriptions.length];
+    const isRunScored = simulatedCount % 2 === 0;
+
     const newPlay = {
       id: `sim-${Date.now()}`,
       time: 'Just now',
       inning: 'Top 8th',
-      description:
-        simulatedCount % 2 === 0
-          ? 'Ohtani lines a 112 mph RBI double into the right-field gap! Freeman scores from second! Dodgers lead 6-4!'
-          : 'Devin Williams gets a swinging strikeout with the changeup for the second out.',
-      score: simulatedCount % 2 === 0 ? '6 - 4 LAD' : '5 - 4 LAD',
+      description: currentDescription,
+      score: isRunScored ? `${game.awayTeam.score + 1} - ${game.homeTeam.score} LAD` : `${game.awayTeam.score} - ${game.homeTeam.score} LAD`,
       highlight: true,
     };
 
@@ -29,8 +36,8 @@ export const LiveGameModal: React.FC<LiveGameModalProps> = ({ isOpen, onClose })
       ...prev,
       awayTeam: {
         ...prev.awayTeam,
-        score: simulatedCount % 2 === 0 ? prev.awayTeam.score + 1 : prev.awayTeam.score,
-        hits: simulatedCount % 2 === 0 ? prev.awayTeam.hits + 1 : prev.awayTeam.hits,
+        score: isRunScored ? prev.awayTeam.score + 1 : prev.awayTeam.score,
+        hits: isRunScored ? prev.awayTeam.hits + 1 : prev.awayTeam.hits,
       },
       plays: [newPlay, ...prev.plays],
     }));
@@ -42,22 +49,22 @@ export const LiveGameModal: React.FC<LiveGameModalProps> = ({ isOpen, onClose })
       role="dialog"
       aria-modal="true"
       aria-labelledby="live-game-modal-title"
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex justify-center p-3 sm:p-6"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-xs flex justify-center p-3 sm:p-6"
     >
-      <div className="bg-white text-[#121212] w-full max-w-3xl rounded-md shadow-2xl flex flex-col relative my-auto border border-[#d6d6d6] overflow-hidden">
+      <div className="bg-white text-[#121212] w-full max-w-3xl rounded-xs shadow-2xl flex flex-col relative my-auto border border-[#d6d6d6] overflow-hidden max-h-[94vh]">
         {/* Top Header */}
         <div className="bg-[#121212] text-white px-5 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#e63946] animate-pulse"></span>
+            <span className="w-2 h-2 rounded-full bg-[#e63946] animate-pulse"></span>
             <span className="font-sans font-bold text-xs uppercase tracking-wider text-[#e63946]">
               NYT Live Sports Reporting
             </span>
-            <span className="text-gray-400">·</span>
+            <span className="text-gray-500">·</span>
             <span className="font-sans text-xs text-gray-300">{game.sport}</span>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white p-1 rounded cursor-pointer"
+            className="text-gray-400 hover:text-white p-1 rounded-xs cursor-pointer"
             aria-label="Close live game"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,85 +73,108 @@ export const LiveGameModal: React.FC<LiveGameModalProps> = ({ isOpen, onClose })
           </button>
         </div>
 
-        {/* Headline & Location */}
-        <div className="p-6 border-b border-[#e2e2e2]">
-          <h2 id="live-game-modal-title" className="headline-font font-bold text-2xl text-black mb-1">
-            MLB Playoffs: {game.title}
-          </h2>
-          <div className="text-xs text-[#727272] font-sans flex items-center justify-between">
-            <span>{game.location}</span>
-            <span className="font-semibold text-[#a81c1c]">{game.statusText}</span>
-          </div>
-
-          {/* Live Scoreboard */}
-          <div className="mt-4 bg-[#f8f9fa] border border-[#e2e2e2] rounded-sm p-4">
-            <div className="grid grid-cols-2 gap-4 items-center">
-              {/* Away */}
-              <div className="flex items-center justify-between pr-4 border-r border-[#e2e2e2]">
-                <div>
-                  <div className="text-xs font-sans text-[#727272]">AWAY</div>
-                  <div className="font-sans font-bold text-lg text-black">{game.awayTeam.name}</div>
-                  <div className="text-xs text-[#555]">8 Hits · 1 Error</div>
-                </div>
-                <div className="font-serif font-bold text-4xl text-[#121212]">{game.awayTeam.score}</div>
-              </div>
-
-              {/* Home */}
-              <div className="flex items-center justify-between pl-2">
-                <div>
-                  <div className="text-xs font-sans text-[#727272]">HOME</div>
-                  <div className="font-sans font-bold text-lg text-black">{game.homeTeam.name}</div>
-                  <div className="text-xs text-[#555]">7 Hits · 0 Errors</div>
-                </div>
-                <div className="font-serif font-bold text-4xl text-[#121212]">{game.homeTeam.score}</div>
-              </div>
-            </div>
-
-            {/* Current At-Bat Bar */}
-            <div className="mt-4 pt-3 border-t border-[#e2e2e2] flex flex-wrap items-center justify-between text-xs font-sans text-[#333] gap-2 bg-white px-3 py-2 rounded">
-              <div>
-                <span className="font-semibold text-black">At Bat:</span> {game.batter}
-              </div>
-              <div>
-                <span className="font-semibold text-black">Pitching:</span> {game.pitcher}
-              </div>
-              <div>
-                <span className="font-semibold text-black">Count:</span> {game.count}
-              </div>
-              <div>
-                <span className="font-semibold text-black">Situation:</span> {game.runners} ({game.outs} Out)
-              </div>
-            </div>
-          </div>
-
-          {/* Interactive Simulation Button */}
-          <div className="mt-3 flex items-center justify-between">
-            <span className="text-xs text-green-700 font-sans flex items-center space-x-1">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-ping"></span>
-              <span>Live pitch stream connected</span>
+        {/* Stadium Photography Header */}
+        <div className="relative h-44 sm:h-52 w-full overflow-hidden bg-black">
+          <img
+            src={game.imageUrl}
+            alt="MLB Playoff Stadium"
+            className="w-full h-full object-cover opacity-85"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent flex flex-col justify-end p-5 text-white">
+            <span className="text-[10px] font-sans font-bold uppercase tracking-widest text-[#ecd98e] mb-1">
+              National League Championship Series · Game 4
             </span>
+            <h2 id="live-game-modal-title" className="headline-font font-bold text-2xl sm:text-3xl leading-tight">
+              {game.title}
+            </h2>
+            <div className="text-xs text-gray-300 font-sans flex items-center justify-between mt-1">
+              <span>{game.location}</span>
+              <span className="font-semibold text-[#f87171]">{game.statusText}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Live Scoreboard & Situation Box */}
+        <div className="p-5 border-b border-[#e2e2e2] bg-[#fafafa]">
+          <div className="grid grid-cols-2 gap-4 items-center bg-white p-4 border border-[#e2e2e2] rounded-xs shadow-2xs">
+            {/* Away */}
+            <div className="flex items-center justify-between pr-4 border-r border-[#e2e2e2]">
+              <div>
+                <div className="text-[10px] font-sans uppercase font-bold text-[#727272]">AWAY</div>
+                <div className="font-sans font-bold text-lg text-black">{game.awayTeam.name}</div>
+                <div className="text-xs text-[#555] font-mono tabular-nums">{game.awayTeam.hits} Hits · {game.awayTeam.errors} Errors</div>
+              </div>
+              <div className="font-serif font-bold text-4xl text-[#121212] font-mono tabular-nums">{game.awayTeam.score}</div>
+            </div>
+
+            {/* Home */}
+            <div className="flex items-center justify-between pl-2">
+              <div>
+                <div className="text-[10px] font-sans uppercase font-bold text-[#727272]">HOME</div>
+                <div className="font-sans font-bold text-lg text-black">{game.homeTeam.name}</div>
+                <div className="text-xs text-[#555] font-mono tabular-nums">{game.homeTeam.hits} Hits · {game.homeTeam.errors} Errors</div>
+              </div>
+              <div className="font-serif font-bold text-4xl text-[#121212] font-mono tabular-nums">{game.homeTeam.score}</div>
+            </div>
+          </div>
+
+          {/* Situation & Diamond Graphic */}
+          <div className="mt-3 flex flex-wrap items-center justify-between text-xs font-sans text-[#333] gap-3 bg-white p-3 border border-[#e2e2e2] rounded-xs">
+            <div className="flex items-center space-x-3">
+              {/* Baseball Diamond SVG */}
+              <svg className="w-8 h-8 text-gray-300" viewBox="0 0 40 40">
+                <rect x="18" y="2" width="6" height="6" transform="rotate(45 20 4)" className="fill-gray-300 stroke-gray-500" />
+                {/* 2nd base occupied */}
+                <rect x="18" y="2" width="6" height="6" transform="rotate(45 20 4)" className="fill-[#a81c1c] stroke-[#a81c1c]" />
+                {/* 3rd base */}
+                <rect x="4" y="16" width="6" height="6" transform="rotate(45 6 18)" className="fill-gray-300 stroke-gray-500" />
+                {/* 1st base occupied */}
+                <rect x="32" y="16" width="6" height="6" transform="rotate(45 34 18)" className="fill-[#a81c1c] stroke-[#a81c1c]" />
+                {/* Home */}
+                <polygon points="20,36 24,32 24,30 16,30 16,32" className="fill-gray-600" />
+              </svg>
+              <div>
+                <span className="font-bold text-black">{game.inning}</span> · {game.outs} Out
+                <span className="text-[#555] block text-[11px]">{game.runners}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div>
+                <span className="text-[#727272] block text-[10px] uppercase font-bold">At Bat</span>
+                <span className="font-semibold text-black">{game.batter}</span>
+              </div>
+              <div>
+                <span className="text-[#727272] block text-[10px] uppercase font-bold">Pitching</span>
+                <span className="font-semibold text-black">{game.pitcher}</span>
+              </div>
+              <div>
+                <span className="text-[#727272] block text-[10px] uppercase font-bold">Count</span>
+                <span className="font-mono font-bold text-black">{game.count}</span>
+              </div>
+            </div>
+
             <button
               onClick={handleSimulatePlay}
-              className="text-xs font-sans bg-[#326891] hover:bg-[#204a6e] text-white px-3 py-1.5 rounded cursor-pointer transition-colors"
+              className="bg-[#121212] hover:bg-[#333] text-white text-xs font-sans font-bold uppercase tracking-wider px-3 py-1.5 rounded-xs transition-colors cursor-pointer"
             >
-              Simulate Next Pitch / Play ⚡
+              Simulate Next Pitch ⚡
             </button>
           </div>
         </div>
 
         {/* Live Play-by-play Stream */}
-        <div className="p-6 max-h-[350px] overflow-y-auto space-y-4">
-          <div className="text-xs font-sans font-bold uppercase tracking-wider text-[#727272] mb-2">
-            Inning-by-Inning Commentary & Key Plays
+        <div className="p-5 overflow-y-auto flex-1 space-y-3">
+          <div className="text-[10px] font-sans font-bold uppercase tracking-widest text-[#727272] mb-1">
+            Inning-by-Inning Commentary
           </div>
 
           {game.plays.map((play) => (
             <div
               key={play.id}
-              className={`p-3 rounded border text-sm ${
-                play.highlight
-                  ? 'bg-[#fffdf0] border-[#ecd98e]'
-                  : 'bg-white border-[#f0f0f0]'
+              className={`p-3 rounded-xs border text-sm ${
+                play.highlight ? 'bg-[#fffdf0] border-[#ecd98e]' : 'bg-white border-[#f0f0f0]'
               }`}
             >
               <div className="flex items-center justify-between text-xs font-sans text-[#727272] mb-1">
@@ -153,7 +183,7 @@ export const LiveGameModal: React.FC<LiveGameModalProps> = ({ isOpen, onClose })
                   <span>·</span>
                   <span>{play.time}</span>
                 </div>
-                <span className="font-mono font-semibold text-[#a81c1c]">{play.score}</span>
+                <span className="font-mono font-bold text-[#a81c1c] tabular-nums">{play.score}</span>
               </div>
               <p className="summary-font text-xs sm:text-sm text-[#222]">{play.description}</p>
             </div>
@@ -161,11 +191,11 @@ export const LiveGameModal: React.FC<LiveGameModalProps> = ({ isOpen, onClose })
         </div>
 
         {/* Footer */}
-        <div className="bg-[#fafafa] border-t border-[#e2e2e2] px-6 py-3 flex items-center justify-between text-xs font-sans">
-          <span className="text-[#727272]">Coverage by Tyler Kepner and James Wagner</span>
+        <div className="bg-[#fafafa] border-t border-[#e2e2e2] px-5 py-3 flex items-center justify-between text-xs font-sans">
+          <span className="text-[#727272]">Dispatches by Tyler Kepner and James Wagner</span>
           <button
             onClick={onClose}
-            className="bg-black hover:bg-[#333] text-white px-4 py-1.5 rounded text-xs font-semibold cursor-pointer"
+            className="border border-[#bbb] hover:border-black text-black px-3 py-1 rounded-xs cursor-pointer font-medium"
           >
             Close Live Coverage
           </button>

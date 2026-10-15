@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { TopUtilityBar } from './components/TopUtilityBar';
 import { Masthead } from './components/Masthead';
 import { ArticleModal } from './components/ArticleModal';
@@ -48,7 +48,7 @@ export default function App() {
   // User state
   const [subscriberEmail, setSubscriberEmail] = useState<string | null>(null);
   const [savedArticleIds, setSavedArticleIds] = useState<string[]>([]);
-  const [heroImageSource, setHeroImageSource] = useState<'placeholder' | 'editorial'>('placeholder');
+  const [heroImageMode, setHeroImageMode] = useState<'photo' | 'placeholder'>('photo');
 
   // Aggregated list of all articles for searching and saving
   const allArticles: Article[] = useMemo(() => {
@@ -84,19 +84,31 @@ export default function App() {
 
   const handleSelectSection = (section: string) => {
     setActiveSection(section);
-    // Smooth scroll down to main or appropriate section if needed
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Keyboard shortcut: '/' to search, 'Escape' to close modals
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#ffffff] text-[#121212] antialiased selection:bg-[#fff2a8] selection:text-black font-serif">
-      {/* Subscriber Badge if signed in */}
+      {/* Subscriber Status Ribbon if signed in */}
       {subscriberEmail && (
-        <div className="bg-[#121212] text-white text-[11px] font-sans py-1 px-4 flex items-center justify-between">
+        <div className="bg-[#121212] text-white text-[11px] font-sans py-1.5 px-4 border-b border-[#333]">
           <div className="max-w-[1280px] mx-auto w-full flex items-center justify-between">
-            <span className="flex items-center space-x-1.5">
-              <span className="text-[#ecd98e]">★</span>
-              <span>All Access Subscriber: <strong className="text-white">{subscriberEmail}</strong></span>
+            <span className="flex items-center space-x-2">
+              <span className="text-[#ecd98e] font-serif font-bold">★</span>
+              <span>All Access Subscriber: <strong>{subscriberEmail}</strong></span>
+              <span className="text-gray-400">· Unlimited reading active</span>
             </span>
             <button
               onClick={() => setSubscriberEmail(null)}
@@ -133,19 +145,20 @@ export default function App() {
       />
       {/* END: MainHeader */}
 
-      {/* Filter notice if section is filtered */}
+      {/* Section active context strip if not front page */}
       {activeSection !== 'U.S.' && (
-        <div className="max-w-[1280px] mx-auto px-4 mb-3">
-          <div className="bg-[#f8f9fa] border border-[#e2e2e2] px-4 py-2 flex items-center justify-between text-xs font-sans">
-            <div>
+        <div className="max-w-[1280px] mx-auto px-4 mb-4">
+          <div className="bg-[#fafafa] border border-[#e2e2e2] px-4 py-2.5 flex items-center justify-between text-xs font-sans">
+            <div className="flex items-center space-x-2">
               <span className="font-bold uppercase tracking-wider text-black">Section: {activeSection}</span>
-              <span className="text-[#666] ml-2">Viewing articles and coverage curated for {activeSection}.</span>
+              <span className="text-[#727272]">·</span>
+              <span className="text-[#555]">Selected coverage and ongoing reporting curated by our {activeSection} desk.</span>
             </div>
             <button
               onClick={() => setActiveSection('U.S.')}
               className="text-[#326891] hover:underline font-semibold cursor-pointer"
             >
-              Back to U.S. Front Page ✕
+              Back to Front Page ✕
             </button>
           </div>
         </div>
@@ -171,19 +184,19 @@ export default function App() {
               <article className="mb-5 pb-5 border-b border-[#e2e2e2] group">
                 <h2
                   onClick={() => setSelectedArticle(LEFT_COLUMN_ARTICLES[0])}
-                  className="headline-font font-bold text-[19px] leading-[1.25] text-black hover:text-[#555] cursor-pointer mb-2 transition-colors"
+                  className="headline-font font-bold text-[19px] leading-[1.25] text-black hover:text-[#555] cursor-pointer mb-2 transition-colors text-balance"
                 >
                   {LEFT_COLUMN_ARTICLES[0].headline}
                 </h2>
                 <p className="summary-font text-[13px] text-[#333333] mb-2 leading-relaxed">
                   {LEFT_COLUMN_ARTICLES[0].summary}
                 </p>
-                <div className="flex items-center text-[10px] text-[#727272] font-sans font-medium space-x-1">
-                  <span>{LEFT_COLUMN_ARTICLES[0].readTime}</span>
+                <div className="flex items-center text-[10px] text-[#727272] font-sans font-medium space-x-1.5">
+                  <span className="tabular-nums">{LEFT_COLUMN_ARTICLES[0].readTime}</span>
                   <span>·</span>
                   <button
                     onClick={(e) => handleOpenCommentsForArticle(LEFT_COLUMN_ARTICLES[0], e)}
-                    className="hover:text-black cursor-pointer"
+                    className="hover:text-black cursor-pointer tabular-nums"
                     title="View comments"
                   >
                     💬 {LEFT_COLUMN_ARTICLES[0].commentCount}
@@ -195,19 +208,19 @@ export default function App() {
               <article className="mb-5 pb-5 border-b border-[#e2e2e2] group">
                 <h2
                   onClick={() => setSelectedArticle(LEFT_COLUMN_ARTICLES[1])}
-                  className="headline-font font-bold text-[18px] leading-[1.25] text-black hover:text-[#555] cursor-pointer mb-2 transition-colors"
+                  className="headline-font font-bold text-[18px] leading-[1.25] text-black hover:text-[#555] cursor-pointer mb-2 transition-colors text-balance"
                 >
                   {LEFT_COLUMN_ARTICLES[1].headline}
                 </h2>
                 <p className="summary-font text-[13px] text-[#333333] mb-2 leading-relaxed">
                   {LEFT_COLUMN_ARTICLES[1].summary}
                 </p>
-                <div className="flex items-center text-[10px] text-[#727272] font-sans font-medium space-x-1">
-                  <span>{LEFT_COLUMN_ARTICLES[1].readTime}</span>
+                <div className="flex items-center text-[10px] text-[#727272] font-sans font-medium space-x-1.5">
+                  <span className="tabular-nums">{LEFT_COLUMN_ARTICLES[1].readTime}</span>
                   <span>·</span>
                   <button
                     onClick={(e) => handleOpenCommentsForArticle(LEFT_COLUMN_ARTICLES[1], e)}
-                    className="hover:text-black cursor-pointer"
+                    className="hover:text-black cursor-pointer tabular-nums"
                     title="View comments"
                   >
                     💬 {LEFT_COLUMN_ARTICLES[1].commentCount}
@@ -219,14 +232,14 @@ export default function App() {
               <article className="mb-4 group">
                 <h3
                   onClick={() => setSelectedArticle(LEFT_COLUMN_ARTICLES[2])}
-                  className="headline-font font-bold text-[16px] leading-[1.25] text-black hover:text-[#555] cursor-pointer mb-1.5 transition-colors"
+                  className="headline-font font-bold text-[16px] leading-[1.25] text-black hover:text-[#555] cursor-pointer mb-1.5 transition-colors text-balance"
                 >
                   {LEFT_COLUMN_ARTICLES[2].headline}
                 </h3>
                 <p className="summary-font text-[12.5px] text-[#4b4b4b] mb-1.5 leading-snug">
                   {LEFT_COLUMN_ARTICLES[2].summary}
                 </p>
-                <span className="text-[10px] text-[#727272] font-sans">{LEFT_COLUMN_ARTICLES[2].readTime}</span>
+                <span className="text-[10px] text-[#727272] font-sans tabular-nums">{LEFT_COLUMN_ARTICLES[2].readTime}</span>
               </article>
             </div>
 
@@ -235,14 +248,14 @@ export default function App() {
               <span className="font-bold uppercase tracking-wider text-[10px] text-[#121212] block mb-2">
                 Trending
               </span>
-              <ul className="space-y-1.5 text-[12px] text-[#121212]">
+              <ul className="space-y-2 text-[12px] text-[#121212]">
                 {TRENDING_ARTICLES.map((art) => (
                   <li key={art.id}>
                     <button
                       onClick={() => setSelectedArticle(art)}
                       className="hover:underline flex items-baseline text-left cursor-pointer group"
                     >
-                      <span className="text-xs text-[#a81c1c] font-bold mr-1.5">{art.trendingRank}</span>
+                      <span className="text-xs text-[#a81c1c] font-bold mr-1.5 font-mono">{art.trendingRank}</span>
                       <span className="group-hover:text-[#326891]">{art.headline}</span>
                     </button>
                   </li>
@@ -260,27 +273,29 @@ export default function App() {
               {/* Main Hero Image */}
               <div
                 onClick={() => setSelectedArticle(MAIN_HERO_ARTICLE)}
-                className="mb-3 overflow-hidden bg-gray-100 border border-[#e8e8e8] cursor-pointer group relative"
+                className="mb-3 overflow-hidden bg-[#f0f0f0] border border-[#e8e8e8] cursor-pointer group relative"
               >
                 <img
-                  alt="Official portrait or featured news photograph"
-                  className="w-full object-cover max-h-[380px] hover:opacity-95 transition-opacity"
+                  alt="Official White House Press Briefing Room podium"
+                  className="w-full object-cover max-h-[380px] hover:opacity-95 transition-opacity duration-300"
                   src={
-                    heroImageSource === 'placeholder'
+                    heroImageMode === 'photo'
                       ? MAIN_HERO_ARTICLE.imageUrl
-                      : 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=1200&q=80'
+                      : 'https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg'
                   }
+                  referrerPolicy="no-referrer"
                 />
-                {/* Subtle photo toggle button for convenience */}
+
+                {/* Subtle Image Toggle for reviewing photography vs placeholder */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setHeroImageSource(heroImageSource === 'placeholder' ? 'editorial' : 'placeholder');
+                    setHeroImageMode(heroImageMode === 'photo' ? 'placeholder' : 'photo');
                   }}
-                  className="absolute bottom-2 right-2 bg-black/70 hover:bg-black text-white text-[10px] font-sans px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Toggle placeholder SVG or editorial photo"
+                  className="absolute bottom-2 right-2 bg-black/75 hover:bg-black text-white text-[9.5px] font-sans uppercase tracking-wider px-2 py-1 rounded-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-xs"
+                  title="Switch between documentary photo and SVG placeholder"
                 >
-                  {heroImageSource === 'placeholder' ? 'View Photo' : 'View Placeholder'}
+                  {heroImageMode === 'photo' ? 'View Placeholder' : 'View High-Res Photo'}
                 </button>
               </div>
 
@@ -291,7 +306,7 @@ export default function App() {
               {/* Feature Headline */}
               <h2
                 onClick={() => setSelectedArticle(MAIN_HERO_ARTICLE)}
-                className="headline-font font-bold text-2xl sm:text-[32px] leading-[1.18] text-black hover:text-[#444] cursor-pointer mb-3 transition-colors"
+                className="headline-font font-bold text-2xl sm:text-[32px] leading-[1.18] text-black hover:text-[#444] cursor-pointer mb-3 transition-colors text-balance"
               >
                 {MAIN_HERO_ARTICLE.headline}
               </h2>
@@ -307,11 +322,11 @@ export default function App() {
               <div className="flex items-center justify-between text-xs font-sans text-[#727272] border-t border-[#e2e2e2] pt-3 pb-6">
                 <span className="font-bold text-[#121212]">{MAIN_HERO_ARTICLE.byline}</span>
                 <div className="flex items-center space-x-2 text-[11px]">
-                  <span>{MAIN_HERO_ARTICLE.readTime}</span>
+                  <span className="tabular-nums">{MAIN_HERO_ARTICLE.readTime}</span>
                   <span>·</span>
                   <button
                     onClick={(e) => handleOpenCommentsForArticle(MAIN_HERO_ARTICLE, e)}
-                    className="hover:text-black cursor-pointer font-medium"
+                    className="hover:text-black cursor-pointer font-medium tabular-nums"
                     title="View comments"
                   >
                     💬 {MAIN_HERO_ARTICLE.commentCount?.toLocaleString()}
@@ -322,14 +337,29 @@ export default function App() {
 
             {/* Sub-features 2-column grid under center article */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-[#e2e2e2]">
-              {/* Investigation sub-feature */}
-              <div className="pr-2">
+              {/* Investigation sub-feature with thumbnail */}
+              <div className="pr-0 sm:pr-2">
                 <span className="kicker-font text-[10px] text-[#a81c1c] uppercase block mb-1">
                   {CENTER_SUB_ARTICLES[0].kicker}
                 </span>
+
+                {CENTER_SUB_ARTICLES[0].imageUrl && (
+                  <div
+                    onClick={() => setSelectedArticle(CENTER_SUB_ARTICLES[0])}
+                    className="mb-2 h-28 overflow-hidden bg-gray-100 border border-[#e8e8e8] cursor-pointer group"
+                  >
+                    <img
+                      src={CENTER_SUB_ARTICLES[0].imageUrl}
+                      alt="Georgia State Capitol"
+                      className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                )}
+
                 <h4
                   onClick={() => setSelectedArticle(CENTER_SUB_ARTICLES[0])}
-                  className="headline-font font-bold text-[15px] leading-tight mb-1 cursor-pointer hover:underline"
+                  className="headline-font font-bold text-[15px] leading-tight mb-1 cursor-pointer hover:underline text-balance"
                 >
                   {CENTER_SUB_ARTICLES[0].headline}
                 </h4>
@@ -338,14 +368,29 @@ export default function App() {
                 </p>
               </div>
 
-              {/* Analysis sub-feature */}
-              <div className="pl-0 sm:pl-2 sm:border-l border-[#e2e2e2]">
+              {/* Analysis sub-feature with thumbnail */}
+              <div className="pl-0 sm:pl-3 sm:border-l border-[#e2e2e2] mt-4 sm:mt-0">
                 <span className="kicker-font text-[10px] text-[#326891] uppercase block mb-1">
                   {CENTER_SUB_ARTICLES[1].kicker}
                 </span>
+
+                {CENTER_SUB_ARTICLES[1].imageUrl && (
+                  <div
+                    onClick={() => setSelectedArticle(CENTER_SUB_ARTICLES[1])}
+                    className="mb-2 h-28 overflow-hidden bg-gray-100 border border-[#e8e8e8] cursor-pointer group"
+                  >
+                    <img
+                      src={CENTER_SUB_ARTICLES[1].imageUrl}
+                      alt="Arctic Naval Vessel"
+                      className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                )}
+
                 <h4
                   onClick={() => setSelectedArticle(CENTER_SUB_ARTICLES[1])}
-                  className="headline-font font-bold text-[15px] leading-tight mb-1 cursor-pointer hover:underline"
+                  className="headline-font font-bold text-[15px] leading-tight mb-1 cursor-pointer hover:underline text-balance"
                 >
                   {CENTER_SUB_ARTICLES[1].headline}
                 </h4>
@@ -361,16 +406,16 @@ export default function App() {
             className="md:col-span-3 pl-0 md:pl-5 pt-4 md:pt-0"
             data-purpose="right-sidebar-briefing"
           >
-            {/* Live Alert Box */}
+            {/* Live Alert Box with Authentic Pulsing Live Indicator */}
             <div
               onClick={() => setIsLiveGameOpen(true)}
-              className="bg-[#fafafa] border border-[#e2e2e2] p-3 mb-5 cursor-pointer hover:border-gray-400 hover:shadow-xs transition-all group"
+              className="bg-[#fafafa] border border-[#e2e2e2] p-3.5 mb-5 cursor-pointer hover:border-black/40 hover:shadow-2xs transition-all group rounded-xs"
             >
               <div className="flex items-center space-x-1.5 text-xs text-[#a81c1c] font-bold tracking-wider uppercase mb-1">
                 <span className="w-2 h-2 rounded-full bg-[#a81c1c] animate-pulse"></span>
                 <span>Live Updates</span>
               </div>
-              <h3 className="headline-font font-bold text-sm leading-snug mb-1 group-hover:underline">
+              <h3 className="headline-font font-bold text-sm leading-snug mb-1 group-hover:underline text-balance">
                 MLB Playoffs: Dodgers Take on Brewers in Crucial Game 4
               </h3>
               <p className="summary-font text-xs text-[#666] mb-2">
@@ -390,41 +435,41 @@ export default function App() {
                 </span>
                 <h4
                   onClick={() => setSelectedArticle(MORNING_BRIEFING)}
-                  className="headline-font font-bold text-[14.5px] leading-snug cursor-pointer hover:underline"
+                  className="headline-font font-bold text-[14.5px] leading-snug cursor-pointer hover:underline text-balance"
                 >
                   {MORNING_BRIEFING.headline}
                 </h4>
-                <span className="text-[10px] text-[#727272] mt-1 block">{MORNING_BRIEFING.readTime}</span>
+                <span className="text-[10px] text-[#727272] mt-1 block font-sans tabular-nums">{MORNING_BRIEFING.readTime}</span>
               </div>
 
               {/* French Premier */}
               <div className="border-b border-[#e2e2e2] pb-3.5">
                 <h4
                   onClick={() => setSelectedArticle(RIGHT_COLUMN_ARTICLES[0])}
-                  className="headline-font font-bold text-[14.5px] leading-snug cursor-pointer hover:underline"
+                  className="headline-font font-bold text-[14.5px] leading-snug cursor-pointer hover:underline text-balance"
                 >
                   {RIGHT_COLUMN_ARTICLES[0].headline}
                 </h4>
                 <p className="summary-font text-xs text-[#555] mt-1">
                   {RIGHT_COLUMN_ARTICLES[0].summary}
                 </p>
-                <span className="text-[10px] text-[#727272] mt-1 block">{RIGHT_COLUMN_ARTICLES[0].readTime}</span>
+                <span className="text-[10px] text-[#727272] mt-1 block font-sans tabular-nums">{RIGHT_COLUMN_ARTICLES[0].readTime}</span>
               </div>
 
               {/* Tech Giants Water Usage */}
               <div className="border-b border-[#e2e2e2] pb-3.5">
                 <h4
                   onClick={() => setSelectedArticle(RIGHT_COLUMN_ARTICLES[1])}
-                  className="headline-font font-bold text-[14.5px] leading-snug cursor-pointer hover:underline"
+                  className="headline-font font-bold text-[14.5px] leading-snug cursor-pointer hover:underline text-balance"
                 >
                   {RIGHT_COLUMN_ARTICLES[1].headline}
                 </h4>
-                <span className="text-[10px] text-[#727272] mt-1 block">{RIGHT_COLUMN_ARTICLES[1].readTime}</span>
+                <span className="text-[10px] text-[#727272] mt-1 block font-sans tabular-nums">{RIGHT_COLUMN_ARTICLES[1].readTime}</span>
               </div>
 
-              {/* OPINION Section */}
+              {/* OPINION Section with Columnist Accents */}
               <div>
-                <div className="flex items-center justify-between border-t border-[#121212] pt-2 mb-2">
+                <div className="flex items-center justify-between border-t border-[#121212] pt-2 mb-2.5">
                   <span className="font-sans font-bold text-xs uppercase tracking-wider text-black">
                     Opinion
                   </span>
@@ -436,28 +481,28 @@ export default function App() {
                   </button>
                 </div>
 
-                <div className="space-y-3">
-                  {/* Friedman */}
-                  <div>
-                    <p className="text-[11px] font-sans font-semibold text-[#555]">
+                <div className="space-y-3.5">
+                  {/* Friedman Column */}
+                  <div className="group">
+                    <p className="text-[11px] font-sans font-semibold text-[#555] tracking-wide">
                       {OPINION_PIECES[0].authorTitle}
                     </p>
                     <h5
                       onClick={() => setSelectedArticle(OPINION_PIECES[0])}
-                      className="headline-font font-bold text-xs leading-snug cursor-pointer hover:underline"
+                      className="headline-font font-bold text-xs leading-snug cursor-pointer group-hover:underline text-balance"
                     >
                       {OPINION_PIECES[0].headline}
                     </h5>
                   </div>
 
-                  {/* Dowd */}
-                  <div className="pt-2 border-t border-[#e2e2e2]">
-                    <p className="text-[11px] font-sans font-semibold text-[#555]">
+                  {/* Dowd Column */}
+                  <div className="pt-2.5 border-t border-[#e2e2e2] group">
+                    <p className="text-[11px] font-sans font-semibold text-[#555] tracking-wide">
                       {OPINION_PIECES[1].authorTitle}
                     </p>
                     <h5
                       onClick={() => setSelectedArticle(OPINION_PIECES[1])}
-                      className="headline-font font-bold text-xs leading-snug cursor-pointer hover:underline"
+                      className="headline-font font-bold text-xs leading-snug cursor-pointer group-hover:underline text-balance"
                     >
                       {OPINION_PIECES[1].headline}
                     </h5>
@@ -469,6 +514,50 @@ export default function App() {
         </div>
       </main>
       {/* END: MainEditorialContent */}
+
+      {/* NYT Games Ribbon (Wordle, The Mini, Spelling Bee, Connections) */}
+      <div className="max-w-[1280px] mx-auto px-4 mb-4">
+        <div className="border-t border-b border-[#e2e2e2] py-2.5 bg-[#fbfbfb] flex flex-wrap items-center justify-between text-xs font-sans px-3 gap-2">
+          <div className="flex items-center space-x-2">
+            <span className="font-bold uppercase tracking-wider text-black text-[11px]">Daily Puzzles:</span>
+            <span className="text-[#555]">Take a break with today’s games.</span>
+          </div>
+
+          <div className="flex items-center space-x-4 text-xs font-medium text-[#121212]">
+            <button
+              onClick={() => alert("Wordle #1214: Today's 5-letter challenge is ready to play!")}
+              className="hover:underline cursor-pointer flex items-center space-x-1"
+            >
+              <span className="text-emerald-700 font-bold">■</span>
+              <span>Wordle</span>
+            </button>
+            <span className="text-gray-300">·</span>
+            <button
+              onClick={() => alert("The Mini Crossword: Solve today's 5x5 grid in record time!")}
+              className="hover:underline cursor-pointer flex items-center space-x-1"
+            >
+              <span className="text-blue-700 font-bold">⊞</span>
+              <span>The Mini</span>
+            </button>
+            <span className="text-gray-300">·</span>
+            <button
+              onClick={() => alert("Spelling Bee: How many words can you find using the center letter?")}
+              className="hover:underline cursor-pointer flex items-center space-x-1"
+            >
+              <span className="text-amber-600 font-bold">✦</span>
+              <span>Spelling Bee</span>
+            </button>
+            <span className="text-gray-300">·</span>
+            <button
+              onClick={() => alert("Connections: Group 16 words into 4 categories.")}
+              className="hover:underline cursor-pointer flex items-center space-x-1"
+            >
+              <span className="text-purple-700 font-bold">●</span>
+              <span>Connections</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* BEGIN: SectionCarouselDivider */}
       <section
@@ -498,7 +587,7 @@ export default function App() {
               >
                 {item.kicker}
               </span>
-              <h3 className="headline-font font-semibold text-[15px] leading-snug group-hover:underline">
+              <h3 className="headline-font font-semibold text-[15px] leading-snug group-hover:underline text-balance">
                 {item.headline}
               </h3>
               <p className="summary-font text-xs text-[#555]">{item.summary}</p>

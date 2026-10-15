@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Article } from '../types';
 
 interface ArticleModalProps {
@@ -17,10 +17,13 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
   onToggleSave,
 }) => {
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('normal');
+  const [theme, setTheme] = useState<'day' | 'sepia' | 'night'>('day');
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [copiedToast, setCopiedToast] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -47,6 +50,15 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  // Track scroll depth
+  const handleScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+      const progress = (scrollTop / (scrollHeight - clientHeight)) * 100;
+      setScrollProgress(Math.min(100, Math.max(0, progress)));
+    }
+  };
+
   if (!article) return null;
 
   const handleShare = () => {
@@ -66,32 +78,68 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
     }
   };
 
+  const getThemeClasses = () => {
+    switch (theme) {
+      case 'sepia':
+        return 'bg-[#fbf9f5] text-[#292524] border-[#e8e4db]';
+      case 'night':
+        return 'bg-[#121212] text-[#e0e0e0] border-[#2a2a2a]';
+      default:
+        return 'bg-white text-[#121212] border-[#d6d6d6]';
+    }
+  };
+
+  const getHeaderThemeClasses = () => {
+    switch (theme) {
+      case 'sepia':
+        return 'bg-[#fbf9f5]/95 border-[#e8e4db] text-[#292524]';
+      case 'night':
+        return 'bg-[#121212]/95 border-[#2a2a2a] text-[#e0e0e0]';
+      default:
+        return 'bg-white/95 border-[#e2e2e2] text-[#121212]';
+    }
+  };
+
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="article-modal-headline"
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex justify-center p-0 sm:p-4 md:p-6"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/65 backdrop-blur-xs flex justify-center p-0 sm:p-4 md:p-6"
     >
-      <div className="bg-white text-[#121212] w-full max-w-4xl min-h-screen sm:min-h-0 sm:rounded-md shadow-2xl flex flex-col relative my-auto border border-[#d6d6d6]">
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className={`${getThemeClasses()} w-full max-w-4xl min-h-screen sm:min-h-0 sm:rounded-xs shadow-2xl flex flex-col relative my-auto border overflow-y-auto max-h-[96vh] transition-colors duration-200`}
+      >
+        {/* Subtle Reading Depth Progress Line */}
+        <div className="sticky top-0 left-0 right-0 h-0.5 bg-transparent z-30 w-full">
+          <div
+            className="h-full bg-[#121212] dark:bg-white transition-all duration-150"
+            style={{ width: `${scrollProgress}%` }}
+          />
+        </div>
+
         {/* Sticky Utility Header inside Reader */}
-        <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-[#e2e2e2] px-4 sm:px-6 py-2.5 flex items-center justify-between z-20">
+        <div
+          className={`sticky top-0 ${getHeaderThemeClasses()} backdrop-blur-md border-b px-4 sm:px-6 py-2.5 flex items-center justify-between z-20 transition-colors duration-200`}
+        >
           <div className="flex items-center space-x-3">
             <span className="font-sans font-bold text-[10px] tracking-widest uppercase text-[#727272]">
               {article.kicker || article.category}
             </span>
             <span className="text-[#cccccc]">|</span>
-            <span className="masthead-font text-lg text-black hidden sm:inline">The New York Times</span>
+            <span className="masthead-font text-lg hidden sm:inline">The New York Times</span>
           </div>
 
           <div className="flex items-center space-x-2 sm:space-x-4 text-xs font-sans">
-            {/* Audio Listen Button */}
+            {/* Audio Narrator Button */}
             <button
               onClick={() => setIsPlayingAudio(!isPlayingAudio)}
-              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded border text-xs font-medium cursor-pointer transition-colors ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-xs border text-xs font-medium cursor-pointer transition-colors ${
                 isPlayingAudio
-                  ? 'bg-[#121212] text-white border-black'
-                  : 'bg-[#f7f7f7] text-[#121212] border-[#e2e2e2] hover:bg-[#ebebeb]'
+                  ? 'bg-black text-white border-black dark:bg-white dark:text-black'
+                  : 'bg-transparent text-inherit border-current/20 hover:bg-black/5'
               }`}
               title="Listen to narrated article"
             >
@@ -101,23 +149,48 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
               </span>
             </button>
 
+            {/* Reading theme toggles: Day, Sepia, Night */}
+            <div className="hidden md:flex items-center space-x-1 border border-current/20 p-0.5 rounded-xs text-[11px]">
+              <button
+                onClick={() => setTheme('day')}
+                className={`px-1.5 py-0.5 cursor-pointer ${theme === 'day' ? 'bg-black text-white font-bold' : 'text-gray-500'}`}
+                title="Default Day White"
+              >
+                Day
+              </button>
+              <button
+                onClick={() => setTheme('sepia')}
+                className={`px-1.5 py-0.5 cursor-pointer ${theme === 'sepia' ? 'bg-[#292524] text-[#fbf9f5] font-bold' : 'text-gray-500'}`}
+                title="Warm Newsprint Sepia"
+              >
+                Paper
+              </button>
+              <button
+                onClick={() => setTheme('night')}
+                className={`px-1.5 py-0.5 cursor-pointer ${theme === 'night' ? 'bg-white text-black font-bold' : 'text-gray-500'}`}
+                title="Night Mode"
+              >
+                Night
+              </button>
+            </div>
+
             {/* Font size toggles */}
-            <div className="hidden sm:flex items-center space-x-1 bg-[#f5f5f5] p-0.5 rounded border border-[#e2e2e2]">
+            <div className="hidden sm:flex items-center space-x-1 border border-current/20 p-0.5 rounded-xs">
               <button
                 onClick={() => setFontSize('normal')}
                 className={`px-1.5 py-0.5 text-xs font-serif cursor-pointer ${
-                  fontSize === 'normal' ? 'bg-white shadow-xs font-bold' : 'text-[#666]'
+                  fontSize === 'normal' ? 'bg-black/10 font-bold' : 'text-gray-500'
                 }`}
-                title="Normal font size"
+                title="Standard font size"
               >
                 A
               </button>
               <button
                 onClick={() => setFontSize('large')}
                 className={`px-1.5 py-0.5 text-sm font-serif cursor-pointer ${
-                  fontSize === 'large' ? 'bg-white shadow-xs font-bold' : 'text-[#666]'
+                  fontSize === 'large' ? 'bg-black/10 font-bold' : 'text-gray-500'
                 }`}
-                title="Large font size"
+                title="Larger font size"
               >
                 A+
               </button>
@@ -126,8 +199,8 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
             {/* Bookmark button */}
             <button
               onClick={() => onToggleSave(article)}
-              className={`p-1.5 rounded cursor-pointer transition-colors ${
-                isSaved ? 'text-[#326891] bg-blue-50' : 'text-[#555] hover:text-black hover:bg-gray-100'
+              className={`p-1.5 rounded-xs cursor-pointer transition-colors ${
+                isSaved ? 'text-[#326891] bg-blue-50/50' : 'text-gray-500 hover:text-black hover:bg-black/5'
               }`}
               title={isSaved ? 'Saved to reading list' : 'Save article'}
             >
@@ -136,17 +209,28 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
               </svg>
             </button>
 
+            {/* Print button */}
+            <button
+              onClick={() => window.print()}
+              className="hidden lg:block p-1.5 text-gray-500 hover:text-black hover:bg-black/5 rounded-xs cursor-pointer transition-colors"
+              title="Print article"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+            </button>
+
             {/* Share button */}
             <button
               onClick={handleShare}
-              className="p-1.5 text-[#555] hover:text-black hover:bg-gray-100 rounded cursor-pointer transition-colors relative"
+              className="p-1.5 text-gray-500 hover:text-black hover:bg-black/5 rounded-xs cursor-pointer transition-colors relative"
               title="Share article"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
               {copiedToast && (
-                <span className="absolute -bottom-8 right-0 bg-black text-white text-[11px] py-1 px-2 rounded whitespace-nowrap shadow-lg">
+                <span className="absolute -bottom-8 right-0 bg-black text-white text-[11px] py-1 px-2 rounded-xs whitespace-nowrap shadow-lg">
                   Link copied!
                 </span>
               )}
@@ -155,7 +239,7 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
             {/* Comments button */}
             <button
               onClick={() => onOpenComments(article)}
-              className="flex items-center space-x-1 text-xs text-[#555] hover:text-black hover:bg-gray-100 px-2 py-1 rounded cursor-pointer"
+              className="flex items-center space-x-1 text-xs text-gray-600 hover:text-black hover:bg-black/5 px-2 py-1 rounded-xs cursor-pointer"
               title="View comments"
             >
               <span>💬</span>
@@ -165,7 +249,7 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
             {/* Close modal */}
             <button
               onClick={onClose}
-              className="p-1 text-[#666] hover:text-black hover:bg-gray-100 rounded cursor-pointer ml-1"
+              className="p-1 text-gray-500 hover:text-black hover:bg-black/5 rounded-xs cursor-pointer ml-1"
               aria-label="Close article"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -179,7 +263,7 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
         {isPlayingAudio && (
           <div className="bg-[#121212] text-white px-6 py-2.5 flex items-center justify-between text-xs font-sans border-b border-[#333]">
             <div className="flex items-center space-x-3 w-1/3 truncate">
-              <span className="text-[#326891] animate-pulse">● AUDIO EDITION</span>
+              <span className="text-[#326891] font-bold">● AUDIO EDITION</span>
               <span className="truncate text-gray-300">{article.headline}</span>
             </div>
 
@@ -208,10 +292,10 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
         )}
 
         {/* Article Reader Body */}
-        <div className="p-6 sm:p-10 md:p-12 max-w-3xl mx-auto w-full">
+        <div className="p-6 sm:p-10 md:p-14 max-w-3xl mx-auto w-full">
           {/* Kicker if present */}
           {article.kicker && (
-            <div className="kicker-font text-xs uppercase tracking-wider mb-2 font-bold text-[#a81c1c]">
+            <div className="kicker-font text-xs uppercase tracking-wider mb-2.5 font-bold text-[#a81c1c]">
               {article.kicker}
             </div>
           )}
@@ -219,23 +303,23 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
           {/* Headline */}
           <h1
             id="article-modal-headline"
-            className="headline-font font-bold text-2xl sm:text-3xl md:text-4xl text-black leading-[1.18] mb-3"
+            className="headline-font font-bold text-2xl sm:text-3xl md:text-4xl text-inherit leading-[1.18] mb-3.5 text-balance"
           >
             {article.headline}
           </h1>
 
           {/* Subhead / Summary */}
-          <p className="summary-font text-lg sm:text-xl text-[#333333] leading-relaxed mb-6 font-normal">
+          <p className="summary-font text-lg sm:text-xl text-inherit/85 leading-relaxed mb-6 font-normal">
             {article.summary}
           </p>
 
           {/* Byline and metadata */}
-          <div className="border-t border-b border-[#e2e2e2] py-3 my-6 flex flex-col sm:flex-row sm:items-center justify-between text-xs font-sans text-[#727272] gap-2">
+          <div className="border-t border-b border-current/15 py-3.5 my-6 flex flex-col sm:flex-row sm:items-center justify-between text-xs font-sans text-inherit/70 gap-2">
             <div>
-              <span className="font-bold text-[#121212] uppercase tracking-wide">
+              <span className="font-bold text-inherit uppercase tracking-wide">
                 {article.byline || 'By THE NEW YORK TIMES'}
               </span>
-              {article.authorBio && <span className="block text-[#555] mt-0.5">{article.authorBio}</span>}
+              {article.authorBio && <span className="block text-inherit/75 mt-0.5">{article.authorBio}</span>}
             </div>
             <div className="flex items-center space-x-2">
               <span>{article.date || 'October 14, 2026'}</span>
@@ -244,28 +328,36 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
             </div>
           </div>
 
-          {/* Featured Image */}
+          {/* Featured Image with Professional Framing */}
           {article.imageUrl && (
-            <div className="my-6">
-              <div className="border border-[#e8e8e8] overflow-hidden bg-gray-100 flex items-center justify-center">
+            <div className="my-8">
+              <div className="border border-current/10 overflow-hidden bg-black/5">
                 <img
                   src={article.imageUrl}
                   alt={article.headline}
-                  className="w-full max-h-[460px] object-cover"
+                  className="w-full max-h-[500px] object-cover"
+                  referrerPolicy="no-referrer"
                 />
               </div>
-              <div className="mt-2 text-xs text-[#727272] font-sans flex items-center justify-between">
-                <span>{article.imageCaption || 'News report photograph.'}</span>
-                <span className="font-medium text-[#555]">{article.imageCredit || 'The New York Times'}</span>
+              <div className="mt-2.5 text-xs text-inherit/70 font-sans flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <span className="italic">{article.imageCaption || 'Photograph documenting the developing reporting.'}</span>
+                <span className="font-medium shrink-0">{article.imageCredit || 'The New York Times'}</span>
               </div>
             </div>
           )}
 
           {/* Article paragraphs */}
-          <div className={`space-y-5 text-[#222222] ${getFontSizeClass()} font-serif`}>
+          <div className={`space-y-6 ${getFontSizeClass()} font-serif text-inherit/90`}>
             {article.fullContent && article.fullContent.length > 0 ? (
               article.fullContent.map((paragraph, index) => (
-                <p key={index} className={index === 0 ? 'first-letter:text-5xl first-letter:font-bold first-letter:float-left first-letter:mr-2.5 first-letter:leading-none' : ''}>
+                <p
+                  key={index}
+                  className={
+                    index === 0
+                      ? 'first-letter:text-5xl first-letter:font-serif first-letter:font-bold first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:leading-none'
+                      : ''
+                  }
+                >
                   {paragraph}
                 </p>
               ))
@@ -275,23 +367,28 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
               </p>
             )}
 
-            {/* Editorial quote callout */}
-            <blockquote className="my-8 pl-5 border-l-2 border-[#121212] italic text-lg sm:text-xl text-[#121212] font-serif py-1">
-              “Our core responsibility is to bring verifiable truth to public debate, holding institutions accountable to the highest standard of public integrity.”
-            </blockquote>
+            {/* Editorial pull quote with clean top/bottom hairline borders (No thick left border) */}
+            <div className="my-10 py-6 border-t border-b border-current/20 text-center">
+              <p className="text-xl sm:text-2xl font-serif italic text-inherit font-normal max-w-xl mx-auto leading-relaxed">
+                “Our core responsibility is to bring verifiable truth to public debate, holding institutions accountable to the highest standard of public integrity.”
+              </p>
+              <span className="block text-xs font-sans uppercase tracking-widest text-inherit/60 mt-3">
+                The New York Times Standards & Practices
+              </span>
+            </div>
           </div>
 
           {/* Article Tags */}
           {article.tags && article.tags.length > 0 && (
-            <div className="mt-10 pt-6 border-t border-[#e2e2e2]">
-              <span className="text-xs font-sans font-bold uppercase tracking-wider text-[#727272] block mb-2">
+            <div className="mt-10 pt-6 border-t border-current/15">
+              <span className="text-xs font-sans font-bold uppercase tracking-wider text-inherit/60 block mb-2">
                 Filed Under
               </span>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 text-xs font-sans">
                 {article.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-xs font-sans bg-[#f5f5f5] text-[#333] hover:bg-[#ebebeb] px-2.5 py-1 rounded cursor-pointer"
+                    className="border border-current/20 hover:border-current/40 px-2.5 py-1 rounded-xs cursor-pointer transition-colors"
                   >
                     {tag}
                   </span>
@@ -301,16 +398,16 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({
           )}
 
           {/* Bottom Actions */}
-          <div className="mt-8 pt-6 border-t border-black flex items-center justify-between">
+          <div className="mt-10 pt-6 border-t border-current flex items-center justify-between">
             <button
               onClick={() => onOpenComments(article)}
-              className="bg-[#121212] text-white hover:bg-[#333] text-xs font-sans font-bold uppercase tracking-wider px-5 py-2.5 rounded-sm cursor-pointer transition-colors"
+              className="bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 text-xs font-sans font-bold uppercase tracking-wider px-5 py-2.5 rounded-xs cursor-pointer transition-colors"
             >
               View Comments ({article.commentCount || 412})
             </button>
             <button
               onClick={onClose}
-              className="text-xs font-sans text-[#727272] hover:text-black cursor-pointer hover:underline"
+              className="text-xs font-sans text-inherit/70 hover:text-inherit cursor-pointer hover:underline"
             >
               Return to Front Page ↑
             </button>

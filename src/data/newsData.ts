@@ -1,4 +1,4 @@
-import { Article, Comment, LivePlayEvent } from '../types';
+import { Article, Comment } from '../types';
 
 export const MAIN_HERO_ARTICLE: Article = {
   id: 'trump-press-secretary-credentials',
@@ -9,10 +9,12 @@ export const MAIN_HERO_ARTICLE: Article = {
   commentCount: 1128,
   category: "U.S.",
   date: "Oct. 14, 2026",
-  imageUrl: "https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg",
-  imageCaption: "Karoline Leavitt during a press briefing in the West Wing.",
+  imageUrl: "/src/assets/images/hero_white_house_press_1792031952592.jpg",
+  imageCaption: "Microphones set before the podium in the James S. Brady Press Briefing Room at the White House.",
   imageCredit: "Doug Mills/The New York Times",
   tags: ["Donald Trump", "White House Press Office", "Transition Committee", "Washington"],
+  authorTitle: "Senior Investigative Correspondents",
+  authorBio: "Michael S. Schmidt and Maggie Haberman report on presidential transitions and federal ethics investigations.",
   fullContent: [
     "WASHINGTON — Karoline Leavitt, recently designated as the White House press secretary for the incoming administration, clarified on Wednesday that her public reference to completing legal credentials had been the result of an administrative misunderstanding stemming from her transition paperwork.",
     "Speaking in an interview with The New York Times, Ms. Leavitt explained that several campaign biographies published earlier in the year mistakenly described her as having finished an executive juris doctorate program.",
@@ -118,6 +120,9 @@ export const CENTER_SUB_ARTICLES: Article[] = [
     readTime: "6 MIN READ",
     byline: "By DANNY HAKIM",
     date: "Oct. 14, 2026",
+    imageUrl: "/src/assets/images/georgia_capitol_investigation_1792031952527.jpg",
+    imageCaption: "The Georgia State Capitol in Atlanta, where state ethics regulators opened the formal investigation.",
+    imageCredit: "Audra Melton for The New York Times",
     fullContent: [
       "ATLANTA — An inquiry initiated by Georgia's Government Transparency and Campaign Finance Commission has uncovered an intricate labyrinth of non-profit entities funneled into gubernatorial super PACs.",
       "Banking records obtained by state investigators show wire transfers originating from offshore LLCs and registered agent fronts in Delaware, earmarked for negative television advertising buys during the contentious primary.",
@@ -134,6 +139,9 @@ export const CENTER_SUB_ARTICLES: Article[] = [
     readTime: "6 MIN READ",
     byline: "By STEVEN ERLANGER and HELENE COOPER",
     date: "Oct. 14, 2026",
+    imageUrl: "/src/assets/images/arctic_naval_patrol_1792031952296.jpg",
+    imageCaption: "A polar patrol vessel navigating shipping lanes near the Svalbard archipelago.",
+    imageCredit: "Sergey Ponomarev for The New York Times",
     fullContent: [
       "TROMSØ, Norway — Above the Arctic Circle, the thinning of perennial polar ice sheets has unlocked strategic passages once blocked for nine months out of the year.",
       "In response, NATO allies and Nordic partners are constructing deep-water listening arrays and staging high-altitude fighter patrols along the Barents Sea rim, where Russian icebreakers have dramatically increased their escort operations for commercial rare-earth convoys.",
@@ -177,7 +185,7 @@ export const OPINION_PIECES: Article[] = [
     headline: "The Geopolitical Earthquake No One Is Preparing For",
     summary: "Why the quiet decoupling of supply lines in the Indo-Pacific will fundamentally reshape American grocery shelves and factory floors before the decade is out.",
     authorTitle: "THOMAS L. FRIEDMAN",
-    authorBio: "Opinion Columnist",
+    authorBio: "Foreign Affairs Opinion Columnist, Three-Time Pulitzer Winner",
     category: "Opinion",
     date: "Oct. 14, 2026",
     readTime: "5 MIN READ",
@@ -193,7 +201,7 @@ export const OPINION_PIECES: Article[] = [
     headline: "Drama on Pennsylvania Avenue Has Reached Its Final Act",
     summary: "Behind the marble columns, the grand tragicomedy of political survival plays out with familiar theatrics and fading applause.",
     authorTitle: "MAUREEN DOWD",
-    authorBio: "Opinion Columnist",
+    authorBio: "Opinion Columnist and Author of 'Are Men Necessary?'",
     category: "Opinion",
     date: "Oct. 14, 2026",
     readTime: "4 MIN READ",
@@ -291,6 +299,7 @@ export const MLB_LIVE_GAME = {
   title: "Dodgers Take on Brewers in Crucial Game 4",
   sport: "MLB NLCS",
   location: "American Family Field, Milwaukee, WI",
+  imageUrl: "/src/assets/images/mlb_dodgers_playoffs_1792031953654.jpg",
   homeTeam: { name: "Milwaukee Brewers", score: 4, hits: 7, errors: 0, code: "MIL" },
   awayTeam: { name: "Los Angeles Dodgers", score: 5, hits: 8, errors: 1, code: "LAD" },
   inning: "Top 8th",
