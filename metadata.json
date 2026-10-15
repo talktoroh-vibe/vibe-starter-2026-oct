@@ -1,0 +1,6 @@
+{
+  "name": "The New York Times",
+  "description": "The New York Times news edition featuring breaking news, live reporting, opinion pieces, deep investigative journalism, and multimedia coverage.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
